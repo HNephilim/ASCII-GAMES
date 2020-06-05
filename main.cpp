@@ -6,6 +6,7 @@
 #define _UNICODE
 #endif
 #include <Windows.h>
+#include <thread>
 using namespace std;
 
 // Buffer Global Variable
@@ -104,7 +105,7 @@ int wmain()
     tetromino[6].append(L"..XX");
     tetromino[6].append(L"....");
 
-    pField = new unsigned char(nFieldHeight * nFieldHeight); // Cria o array com o campo (de 0 a 9 sendo index para a wstring <asset>)
+    pField = new unsigned char(nFieldHeight * nFieldWidth); // Cria o array com o campo (de 0 a 9 sendo index para a wstring <asset>)
     for (int x = 0; x < nFieldWidth; x++) //Escaneia todas as colunas dentro do limite
     {
         for (int y = 0; y < nFieldHeight; y++) //Escaneia todas a linhas dentro dos limites
@@ -125,32 +126,56 @@ int wmain()
     SetConsoleActiveScreenBuffer(hConsole);
     DWORD dwBytesWritten = 0;
 
+    
+    
+    // Game Stuff
     bool bGameOver = false;
+    int nCurrentPiece = 2;
+    int nCurrentRotation = 0;
+    int nCurrentX = nFieldWidth / 2;
+    int nCurrentY = 0;
+    bool bKey[4];
 
+    //Game Loop
     while (!bGameOver)
     {
     //GAME TIMING =======================================
-
+    this_thread::sleep_for(50ms);
 
     //INPUT =============================================
-
+        for (int k = 0; k<4; k++)
+        {
+            bKey[k] = (0x8000 & GetAsyncKeyState((unsigned char)("\x27\x25\x28Z"[k]))) != 0;
+        }
 
     //GAME LOGIC ========================================
 
 
     //RENDER OUTPUT =====================================
 
-    //Draw Field (Alterando a wchar_t <screen> eu desenho na tela. Faco isso mexendo nos valores de pField)
-    for (int x = 0; x < nFieldWidth; x++)
-    {
-        for (int y = 0; y < nFieldHeight; y++)
+        //Draw Field (Alterando a wchar_t <screen> eu desenho na tela. Faco isso mexendo nos valores de pField)
+        for (int x = 0; x < nFieldWidth; x++)
         {
-            screen[(y + 2) * nScreenWidth + (x + 2)] = asset[pField[y * nFieldWidth + x]];
+            for (int y = 0; y < nFieldHeight; y++)
+            {
+                screen[(y + 2) * nScreenWidth + (x + 2)] = asset[pField[y * nFieldWidth + x]];
+            }
         }
+
+        //Draw Current Piece
+        for (int px = 0; px < 4; px++)
+        {
+            for (int py = 0; py < 4; py++)
+            {
+                if(tetromino[nCurrentPiece][Rotate(px, py, nCurrentRotation)] == L'X')
+                {
+                    screen[(nCurrentY + py + 2) * nScreenWidth + (nCurrentX + px + 2)] = asset[nCurrentPiece + 1];
+                }
+            }
         }
 
             //Display Frame
-        WriteConsoleOutputCharacter(hConsole, screen, nScreenWidth * nScreenHeight, {0, 0}, &dwBytesWritten);
+            WriteConsoleOutputCharacter(hConsole, screen, nScreenWidth * nScreenHeight, {0, 0}, &dwBytesWritten);
     }
 
     return 0;
