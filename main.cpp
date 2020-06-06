@@ -1,4 +1,7 @@
 #include <iostream>
+#include <thread>
+#include <cstdlib>
+#include <vector>
 #ifndef UNICODE
 #define UNICODE
 #endif
@@ -6,7 +9,6 @@
 #define _UNICODE
 #endif
 #include <Windows.h>
-#include <thread>
 using namespace std;
 
 // Buffer Global Variable
@@ -37,7 +39,7 @@ int Rotate(int px, int py, int r) //Return the right index for the rotate pieces
     return 0;
 }
 
-bool bDoesPieceFit(int nTetromino, int nRotation, int nPosX, int nPosY)
+bool DoesPieceFit(int nTetromino, int nRotation, int nPosX, int nPosY)
 {
     //Lets iterate through all the 4x4 (actually 16) long tetromino string array
     for (int px = 0; px < 4; px++)
@@ -130,28 +132,136 @@ int wmain()
     
     // Game Stuff
     bool bGameOver = false;
-    int nCurrentPiece = 2;
+    int nCurrentPiece = 1;
     int nCurrentRotation = 0;
     int nCurrentX = nFieldWidth / 2;
     int nCurrentY = 0;
-    bool bKey[4];
+    vector<int> vLines;
+    int nScore = 0;
+
+    bool bKey[5];
+    bool bRotateHold = false;
+
+    int nSpeed = 20;
+    int nSpeedCouter = 0;
+    bool bForceDown = false;
+    int nPieceCount = 0;
 
     //Game Loop
     while (!bGameOver)
     {
-    //GAME TIMING =======================================
-    this_thread::sleep_for(50ms);
+    //GAME TIMING =========================================================================================================================================================
+        Sleep(50); //game tick
+        nSpeedCouter++; //increments counter each ticks
+        bForceDown = (nSpeedCouter == nSpeed); //whenever ticks acumulates enough to match speed, it forces down. Decreasing nSpeed increases speed of the overall gaming exp.
 
-    //INPUT =============================================
-        for (int k = 0; k<4; k++)
-        {
-            bKey[k] = (0x8000 & GetAsyncKeyState((unsigned char)("\x27\x25\x28Z"[k]))) != 0;
+        //INPUT ===========================================================================================================================================================
+        for (int k = 0; k<5; k++)
+        {                                                      //  0R  1L  2D 3Z       
+            bKey[k] = (0x8000 & GetAsyncKeyState((unsigned char)("\x27\x25\x28ZQ"[k]))) != 0;
         }
 
-    //GAME LOGIC ========================================
+        //GAME LOGIC ======================================================================================================================================================
+        if (bKey[1] && DoesPieceFit(nCurrentPiece, nCurrentRotation, nCurrentX - 1, nCurrentY)) //If left key is pressed, and the piece fit 1 to the left, move to the left
+        {
+            nCurrentX -= 1;
+        }
+
+        if (bKey[0] && DoesPieceFit(nCurrentPiece, nCurrentRotation, nCurrentX + 1, nCurrentY)) //If right key is pressed, and the piece fit 1 to the right, move to the right
+        {
+            nCurrentX += 1;
+        }
+
+        if (bKey[2] && DoesPieceFit(nCurrentPiece, nCurrentRotation, nCurrentX, nCurrentY + 1)) //If down key is pressed, and the piece fit 1 down, move down
+        {
+            nCurrentY += 1;
+        }
+
+        if (bKey[3]) //Check for rotations when Z is pressed, but not hold
+        {
+            if (DoesPieceFit(nCurrentPiece, nCurrentRotation + 1, nCurrentX, nCurrentY) && !bRotateHold)
+            {
+                nCurrentRotation += 1;                
+            }
+            bRotateHold = true;
+        }
+        else
+        {
+            bRotateHold = false;
+        }
+
+        if (bForceDown)
+        {
+            nSpeedCouter = 0;
+            if (DoesPieceFit(nCurrentPiece, nCurrentRotation, nCurrentX, nCurrentY + 1))
+            {
+                nCurrentY += 1;
+            }
+            else
+            {
+                //Lock the current piece in place by saving in pField the position of the X in the tetromino array
+                for (int px = 0; px < 4; px++)
+                {
+                    for (int py = 0; py < 4; py++)
+                    {
+                        if(tetromino[nCurrentPiece][Rotate(px, py, nCurrentRotation)] == L'X')
+                        {
+                            pField[(nCurrentY + py) * nFieldWidth + (nCurrentX + px)] = nCurrentPiece + 1; //takes the id, sums 1 to further render the right element from asset array
+                        }
+                    }
+                }
+                nPieceCount++;
+                if (nPieceCount % 10 == 0)
+                {
+                    if  (nSpeed >= 10)
+                    {
+                        nSpeed--;
+                    }
+                }
+
+                //Check if we got lanes
+                for (int py = 0; py < 4; py++)
+                {
+                    if (nCurrentY + py < nFieldHeight - 1)
+                    {
+                        bool bLine = true;
+                        for (int px = 1; px < nFieldWidth - 1; px++)
+                        {
+                            bLine &= pField[(nCurrentY + py) * nFieldWidth + px] != 0; //Logical and between bLine and if pField is diff than 0. A single false can`t return
+                        }
+                        if (bLine)
+                        {
+                            for (int px = 1; px < nFieldWidth - 1; px++)
+                            {
+                               pField[(nCurrentY + py) * nFieldWidth + px] = 8; //Changes de lines for 8th asset array element (=)
+                            }
+                            vLines.push_back(nCurrentY + py);
+                        }
+                    }
+                }
+
+                nScore += 25;
+                if (!vLines.empty()) //if we have lines
+                {
+                    /*each line made this turn will exponentially increasse the earned score by 
+                    left bitshifting 1(0b10, 0b100, 0b1000 and 0b1000) and multiplying it by 0d100*/
+                    nScore += (1 << vLines.size()) * 100; 
+                    
+                }
 
 
-    //RENDER OUTPUT =====================================
+                //Choose next piece
+                nCurrentX = nFieldWidth / 2;
+                nCurrentY = 0;
+                nCurrentRotation = rand() % 4;
+                nCurrentPiece = rand() % 7;
+
+                //If piece does not piece
+                bGameOver = !DoesPieceFit(nCurrentPiece, nCurrentRotation, nCurrentX, nCurrentY);
+            }
+            
+        }
+        //RENDER OUTPUT ===================================================================================================================================================
 
         //Draw Field (Alterando a wchar_t <screen> eu desenho na tela. Faco isso mexendo nos valores de pField)
         for (int x = 0; x < nFieldWidth; x++)
@@ -172,6 +282,25 @@ int wmain()
                     screen[(nCurrentY + py + 2) * nScreenWidth + (nCurrentX + px + 2)] = asset[nCurrentPiece + 1];
                 }
             }
+        }
+
+        if (!vLines.empty()) //Do we have lines made?
+        {
+            WriteConsoleOutputCharacter(hConsole, screen, nScreenWidth * nScreenHeight, {0, 0}, &dwBytesWritten); //draw screen with lines
+            Sleep(400); //delay
+
+            for (auto &v : vLines) //v will be equal of each element of vLine
+            {
+                for (int px = 1; px < nFieldWidth - 1; px++) //iterate through the line
+                {
+                    for (int py = v; py > 0; py--) // iterate though a column, starting in line v (a line stored in vLines in LOGIC)
+                    {
+                        pField[py * nFieldWidth + px] = pField[(py - 1) * nFieldWidth + px]; // pull the element above this cell one down
+                    }
+                    pField[px] = 0; // and cleans the first line
+                }
+            }
+            vLines.clear(); //clear the vector
         }
 
             //Display Frame

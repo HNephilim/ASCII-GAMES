@@ -10,7 +10,7 @@
 				"-municode",
 				"${file}",
 				"-o",
-				"D:\\Codin\\Build\\ASCII_GAME\\${fileBasenameNoExtension}.exe"
+				"D:\\Codin\\Build\\ASCII_GAME\\${fileBasenameNoExtension}.exe"				
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"
