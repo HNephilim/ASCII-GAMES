@@ -1,7 +1,9 @@
 #include <iostream>
 #include <thread>
-#include <cstdlib>
 #include <vector>
+#include <random>
+#include <chrono>
+#include <string>
 #ifndef UNICODE
 #define UNICODE
 #endif
@@ -17,10 +19,15 @@ int nScreenHeight = 30;             //Console Screen Size Y
 
 //Tetris Global Variables
 wstring tetromino[7];
+wstring boxnextpiece[2];
 wstring asset = L" ABCDEFG=#";
 int nFieldWidth = 12;
 int nFieldHeight = 18;
 unsigned char *pField = nullptr;
+
+// Random Number Generator
+unsigned int seed = chrono::system_clock::now().time_since_epoch().count();
+minstd_rand0 rand_eng (seed);
 
 //Functions
 int Rotate(int px, int py, int r) //Return the right index for the rotate pieces. To look into Tetromino array
@@ -106,6 +113,14 @@ int wmain()
     tetromino[6].append(L".XX.");
     tetromino[6].append(L"..XX");
     tetromino[6].append(L"....");
+    
+    boxnextpiece[0].append(L"NEXT.PIECE");
+    boxnextpiece[1].append(L"x----x");
+    boxnextpiece[1].append(L"|....|");
+    boxnextpiece[1].append(L"|....|");
+    boxnextpiece[1].append(L"|....|");
+    boxnextpiece[1].append(L"|....|");
+    boxnextpiece[1].append(L"x----x");
 
     pField = new unsigned char(nFieldHeight * nFieldWidth); // Cria o array com o campo (de 0 a 9 sendo index para a wstring <asset>)
     for (int x = 0; x < nFieldWidth; x++) //Escaneia todas as colunas dentro do limite
@@ -116,7 +131,7 @@ int wmain()
         }
     }
 
-    //Create Screen Array. Modifing this array will draw to the screen(???)
+    //Create Screen Array. Modifing this array will draw to the screen
     wchar_t *screen = new wchar_t[nScreenWidth * nScreenHeight];
     for (int i = 0; i < nScreenHeight *nScreenWidth; i++) //Fill the Screen with blank
     {
@@ -133,7 +148,9 @@ int wmain()
     // Game Stuff
     bool bGameOver = false;
     int nCurrentPiece = 1;
+    int nNextPiece = rand_eng() % 7;
     int nCurrentRotation = 0;
+    int nNextRotation = rand_eng() % 4;
     int nCurrentX = nFieldWidth / 2;
     int nCurrentY = 0;
     vector<int> vLines;
@@ -210,6 +227,8 @@ int wmain()
                         }
                     }
                 }
+
+                //Increasse difficult as game progresses
                 nPieceCount++;
                 if (nPieceCount % 10 == 0)
                 {
@@ -253,10 +272,12 @@ int wmain()
                 //Choose next piece
                 nCurrentX = nFieldWidth / 2;
                 nCurrentY = 0;
-                nCurrentRotation = rand() % 4;
-                nCurrentPiece = rand() % 7;
+                nCurrentRotation = nNextRotation;
+                nCurrentPiece = nNextPiece;
+                nNextRotation = rand_eng() % 4;
+                nNextPiece = rand_eng() % 7;
 
-                //If piece does not piece
+                //If next piece does not piece
                 bGameOver = !DoesPieceFit(nCurrentPiece, nCurrentRotation, nCurrentX, nCurrentY);
             }
             
@@ -284,6 +305,44 @@ int wmain()
             }
         }
 
+        
+        //Draw Extra stuff
+        //Score
+        wstring sScore = L"SCORE: ";
+        sScore.append(to_wstring(nScore));
+
+        for (int i = 0; i < sScore.size(); ++i)
+        {
+            screen[3 * nScreenWidth + nFieldHeight + 2 + i] = sScore[i];
+        }
+            
+
+        //Next piece
+        /*for (int i = 0; i < boxnextpiece[0].size(); ++i)
+        {
+            screen[5 * nScreenWidth + nFieldHeight + 2 + i] = boxnextpiece[0][i];
+        }*/
+
+        /*for (int y = 1; y <= 6; ++y)
+        {
+            for (int x = 0; x < boxnextpiece[y].size(); ++x)
+            {
+                screen[(7+y) * nScreenWidth + nFieldHeight + 4 + x] = boxnextpiece[y][x];
+            }
+        }*/
+
+        //Draw Next Piece
+        for (int px = 0; px < 4; px++)
+        {
+            for (int py = 0; py < 4; py++)
+            {
+                if (tetromino[nNextPiece][Rotate(px, py, nNextRotation)] == L'X')
+                {
+                    screen[(8 + py) * nScreenWidth + (11 + px) + nFieldWidth] = asset[nNextPiece + 1];
+                }
+            }
+            }
+
         if (!vLines.empty()) //Do we have lines made?
         {
             WriteConsoleOutputCharacter(hConsole, screen, nScreenWidth * nScreenHeight, {0, 0}, &dwBytesWritten); //draw screen with lines
@@ -306,6 +365,9 @@ int wmain()
             //Display Frame
             WriteConsoleOutputCharacter(hConsole, screen, nScreenWidth * nScreenHeight, {0, 0}, &dwBytesWritten);
     }
+    CloseHandle(hConsole);
+    cout << "Game Over!! Score: " << nScore << endl;
+    system("pause");
 
     return 0;
 }
