@@ -19,7 +19,7 @@ int nScreenHeight = 30;             //Console Screen Size Y
 
 //Tetris Global Variables
 wstring tetromino[7];
-wstring boxnextpiece[2];
+wstring boxnextpiece[7];
 wstring asset = L" ABCDEFG=#";
 int nFieldWidth = 12;
 int nFieldHeight = 18;
@@ -113,16 +113,16 @@ int wmain()
     tetromino[6].append(L".XX.");
     tetromino[6].append(L"..XX");
     tetromino[6].append(L"....");
-    
-    boxnextpiece[0].append(L"NEXT.PIECE");
-    boxnextpiece[1].append(L"x----x");
-    boxnextpiece[1].append(L"|....|");
-    boxnextpiece[1].append(L"|....|");
-    boxnextpiece[1].append(L"|....|");
-    boxnextpiece[1].append(L"|....|");
-    boxnextpiece[1].append(L"x----x");
 
-    pField = new unsigned char(nFieldHeight * nFieldWidth); // Cria o array com o campo (de 0 a 9 sendo index para a wstring <asset>)
+    boxnextpiece[0].append(L"NEXT PIECE");
+    boxnextpiece[1].append(L"x----x\0");
+    boxnextpiece[2].append(L"|    |\0");
+    boxnextpiece[3].append(L"|    |\0");
+    boxnextpiece[4].append(L"|    |\0");
+    boxnextpiece[5].append(L"|    |\0");
+    boxnextpiece[6].append(L"x----x\0");
+
+    pField = new unsigned char[nFieldHeight * nFieldWidth]; // Cria o array com o campo (de 0 a 9 sendo index para a wstring <asset>)
     for (int x = 0; x < nFieldWidth; x++) //Escaneia todas as colunas dentro do limite
     {
         for (int y = 0; y < nFieldHeight; y++) //Escaneia todas a linhas dentro dos limites
@@ -130,12 +130,13 @@ int wmain()
             pField[y * nFieldWidth + x] = (x == 0 || x == nFieldWidth - 1 || y == nFieldHeight - 1) ? 9 : 0;
         }
     }
-
+    
     //Create Screen Array. Modifing this array will draw to the screen
     wchar_t *screen = new wchar_t[nScreenWidth * nScreenHeight];
-    for (int i = 0; i < nScreenHeight *nScreenWidth; i++) //Fill the Screen with blank
+    for (int i = 0; i < nScreenHeight * nScreenWidth; i++) //Fill the Screen with blank
     {
         screen[i] = L' ';
+        
     }
 
     //Windows shananigans to create the buffer
@@ -318,18 +319,18 @@ int wmain()
             
 
         //Next piece
-        /*for (int i = 0; i < boxnextpiece[0].size(); ++i)
+        for (int i = 0; i < boxnextpiece[0].size(); ++i)
         {
             screen[5 * nScreenWidth + nFieldHeight + 2 + i] = boxnextpiece[0][i];
-        }*/
+        }
 
-        /*for (int y = 1; y <= 6; ++y)
+        for (int y = 1; y < 7; ++y)
         {
             for (int x = 0; x < boxnextpiece[y].size(); ++x)
             {
-                screen[(7+y) * nScreenWidth + nFieldHeight + 4 + x] = boxnextpiece[y][x];
+                screen[(6+y) * nScreenWidth + nFieldHeight + 4 + x] = boxnextpiece[y][x];
             }
-        }*/
+        }
 
         //Draw Next Piece
         for (int px = 0; px < 4; px++)
