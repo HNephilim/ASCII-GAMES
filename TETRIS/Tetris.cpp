@@ -342,7 +342,7 @@ int wmain()
                     screen[(8 + py) * nScreenWidth + (11 + px) + nFieldWidth] = asset[nNextPiece + 1];
                 }
             }
-            }
+        }
 
         if (!vLines.empty()) //Do we have lines made?
         {
