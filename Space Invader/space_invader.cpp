@@ -24,11 +24,11 @@ vector<string> pathway = {"Assets_SP\\player.txt",
                           "Assets_SP\\shot.txt",
                           "Assets_SP\\powershot.txt",
                           "Assets_SP\\lives.txt"};
-vector<wstring> persona;
+vector<wstring> objeto;
 vector<int> lines;
 
 //KeyStuff              
-string virtualkeys = "\x26\x28ZXQ"; // 0 = UP / 1 = DW / 2 = Z / 3 = X / 4 = Q
+string virtualkeys = "\x26\x28ZXQOL"; // 0 = UP / 1 = DW / 2 = Z / 3 = X / 4 = Q / 5 = O / 6 = L
 GetKey key(virtualkeys);
 
 extern "C"
@@ -50,20 +50,19 @@ int wmain()
             final.append(temp_temp);
             ++rows;
         }
-        persona.push_back(final);
+        objeto.push_back(final);
         lines.push_back(rows);
     }
     
     //Declaring Objects
-    Sprite NavePlayer((persona[0].size() / lines[0]), lines[0], persona[0]);
-    //Sprite Monstro1  ((persona[1].size() / lines[1]), lines[1], persona[1]);
-    //Sprite Monstro2  ((persona[2].size() / lines[2]), lines[2], persona[2]);
-    //Sprite Boss      ((persona[3].size() / lines[3]), lines[3], persona[3]);
-    Sprite Shot      ((persona[4].size() / lines[4]), lines[4], persona[4]);
-    Sprite Powershot ((persona[5].size() / lines[5]), lines[5], persona[5]);
-    Sprite Lives     ((persona[6].size() / lines[6]), lines[6], persona[6]);
+    Sprite NavePlayer  ( objeto[0] , lines[0] );
+    //Sprite Monstro1  ( objeto[1] , lines[1] );
+    //Sprite Monstro2  ( objeto[2] , lines[2] );
+    //Sprite Boss      ( objeto[3] , lines[3] );
+    Sprite Shot        ( objeto[4] , lines[4] );
+    Sprite Powershot   ( objeto[5] , lines[5] );
+    Sprite Lives       ( objeto[6] , lines[6] );
 
-    
     Buffer SpInv(120, 30);
     
     //Player Variables
@@ -78,12 +77,6 @@ int wmain()
 
     //Gamelogic Stuff
     bool bGameOver;
-    DrawSprite(Lives, 3, 0, SpInv);
-    DrawSprite(Lives, 4, 0, SpInv);
-    DrawSprite(Lives, 5, 0, SpInv);
-    DrawSprite(Powershot, 9, 0, SpInv);
-    DrawSprite(Powershot, 10, 0, SpInv);
-    DrawSprite(Powershot, 11, 0, SpInv);
     
 
     while (!bGameOver)
@@ -92,11 +85,11 @@ int wmain()
         Sleep(50);
 
         //GAME LOGIC ===================================================================================================================
-        if (key.isKeyPressed(0) && nPlayerY < 0)
+        if (key.isKeyPressed(0) && nPlayerY > 2)
         {
             nPlayerY -= 1;
         }
-        if (key.isKeyPressed(1) && nPlayerY > SpInv.height())
+        if (key.isKeyPressed(1) && nPlayerY < (SpInv.height()-NavePlayer.height()))
         {
             nPlayerY += 1;
         }
@@ -104,12 +97,31 @@ int wmain()
         {
             bGameOver = true;
         }
+        if (key.isKeyPressed(5) && nPlayerLives > 0)
+        {
+            nPlayerLives -= 1;
+            nPlayerPowerUps -= 1;
+        }
+        if (key.isKeyPressed(6) && nPlayerLives < 8)
+        {
+            nPlayerLives += 1;
+            nPlayerPowerUps += 1;
+        }
 
         //RENDER OUTPUT
+        CleanFrame(SpInv);
+        for (int i = 0; i < nPlayerLives; (i += Lives.width()))
+            DrawSprite(Lives, 3 + i, 0, SpInv);
+
+        for (int i = 0; i < nPlayerLives; (i += Powershot.width()))
+            DrawSprite(Powershot, nPlayerLives*Lives.width()+4 + i, 0, SpInv);
 
         DrawSprite(NavePlayer, nPlayerX, nPlayerY, SpInv);
+        wstring info = L"nPlayerY = " + to_wstring(nPlayerY) + L"  Lives e POW = " + to_wstring(nPlayerLives);
+        DrawString(info, 4, 29, SpInv);
         DrawFrame(SpInv);
     }
+    
     SpInv.Close();
     system("pause");
     return 0;

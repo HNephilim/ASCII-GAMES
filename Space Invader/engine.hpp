@@ -16,9 +16,9 @@ private:
     std::wstring m_sBody;
 
 public:
-    Sprite(int Width, int Height, std::wstring Body)
+    Sprite(std::wstring Body, int Height)
     {
-        m_nWidth = Width;
+        m_nWidth = Body.size()/Height;
         m_nHeight = Height;
         m_sBody = Body;
     }
@@ -47,16 +47,20 @@ private:
 
 public:
     int HP;
-    
-    Monster(Sprite Body, int HitPoints)
+    int PosX;
+    int PosY;
+
+    Monster(Sprite Body, int HitPoints, int X, int Y)
     {
         m_Body = Body;
         HP = HitPoints;
+        PosX = X;
+        PosY = Y;
     }
 
-    std::wstring getSprite()
+    Sprite getSprite()
     {
-        return m_Body.body();
+        return m_Body;
     }
 };
 
@@ -66,11 +70,11 @@ private:
     int m_nScreenWidth;
     int m_nScreenHeight;
     wchar_t *screen = nullptr;
-    
 
 public:
     HANDLE hConsole;
     DWORD dwBytesWritten = 0;
+    
 
     Buffer(int Screen_Width, int Screen_Height)
     {
@@ -109,7 +113,7 @@ public:
 class GetKey
 {
 private:
-    char *m_keys  = nullptr;
+    char *m_keys = nullptr;
 
 public:
     GetKey(std::string VirtualKeyAraay)
@@ -139,7 +143,37 @@ void DrawSprite(Sprite sprite, int CoordX, int CoordY, Buffer Screen)
     }
 }
 
+void DrawMonster(Monster monster, Buffer Screen)
+{
+    for (int py = 0; py < monster.getSprite().height(); ++py)
+    {
+        for (int px = 0; px < monster.getSprite().height(); ++px)
+        {
+            if (monster.getSprite().body()[py * monster.getSprite().width() + px] != L' ')
+            {
+                Screen.getBuffer()[(monster.PosY + py) * Screen.width() + (monster.PosX + px)] = monster.getSprite().body()[py * monster.getSprite().width() + px];
+            }
+        }
+    }
+}
+
+void DrawString(std::wstring phrase, int CoordX, int CoordY, Buffer Screen)
+{
+    for (int i = 0; i < phrase.size(); ++i)
+    {
+        Screen.getBuffer()[CoordY * Screen.width() + CoordX + i] = phrase[i];
+    }
+}
+
 void DrawFrame(Buffer Screen)
 {
     WriteConsoleOutputCharacter(Screen.hConsole, Screen.getBuffer(),Screen.height()*Screen.width(), {0, 0}, &Screen.dwBytesWritten);
+}
+
+void CleanFrame(Buffer Screen)
+{
+    for (int i = 0; i < Screen.width()*Screen.height(); ++i)
+    {
+        Screen.getBuffer()[i] = L' ';
+    }
 }
