@@ -22,6 +22,7 @@ public:
         m_nHeight = Height;
         m_sBody = Body;
     }
+    Sprite() = default;
 
     int height()
     {
@@ -36,6 +37,26 @@ public:
     std::wstring body()
     {
         return m_sBody;
+    }
+};
+
+class Monster
+{
+private:
+    Sprite m_Body;
+
+public:
+    int HP;
+    
+    Monster(Sprite Body, int HitPoints)
+    {
+        m_Body = Body;
+        HP = HitPoints;
+    }
+
+    std::wstring getSprite()
+    {
+        return m_Body.body();
     }
 };
 
@@ -78,7 +99,30 @@ public:
     {
         return screen;
     }
+    void Close()
+    {
+        CloseHandle(hConsole);
+    }
 
+};
+
+class GetKey
+{
+private:
+    char *m_keys  = nullptr;
+
+public:
+    GetKey(std::string VirtualKeyAraay)
+    {
+        m_keys = new char[VirtualKeyAraay.size()];
+        char buffer[20];
+        VirtualKeyAraay.copy(m_keys, VirtualKeyAraay.size(), 0);
+    }
+
+    bool isKeyPressed(int k)
+    {
+        return (0x8000 & GetAsyncKeyState((unsigned char)m_keys[k])) != 0;
+    }
 };
 
 void DrawSprite(Sprite sprite, int CoordX, int CoordY, Buffer Screen)
