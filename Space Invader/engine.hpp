@@ -47,15 +47,15 @@ private:
 
 public:
     int HP;
-    int PosX;
-    int PosY;
+    int X;
+    int Y;
 
-    Monster(Sprite Body, int HitPoints, int X, int Y)
+    Monster(Sprite Body, int HitPoints, int CoordX, int CoordY)
     {
         m_Body = Body;
         HP = HitPoints;
-        PosX = X;
-        PosY = Y;
+        X = CoordX;
+        Y = CoordY;
     }
 
     Sprite getSprite()
@@ -129,6 +129,28 @@ public:
     }
 };
 
+class Shot
+{
+    private:
+        Sprite m_body;
+
+    public:
+        int X;
+        int Y;
+
+        Shot(Sprite Body, int CoordX, int CoordY)
+        {
+            m_body = Body;
+            X = CoordX;
+            Y = CoordY;
+        }
+
+        Sprite GetSprite()
+        {
+            return m_body;
+        }
+};
+
 void DrawSprite(Sprite sprite, int CoordX, int CoordY, Buffer Screen)
 {
     for (int py = 0; py < sprite.height(); ++py)
@@ -138,20 +160,6 @@ void DrawSprite(Sprite sprite, int CoordX, int CoordY, Buffer Screen)
             if (sprite.body()[py * sprite.width() + px] != L' ')
             {
                 Screen.getBuffer()[(CoordY + py) * Screen.width() + (CoordX + px)] = sprite.body()[py * sprite.width() + px];
-            }
-        }
-    }
-}
-
-void DrawMonster(Monster monster, Buffer Screen)
-{
-    for (int py = 0; py < monster.getSprite().height(); ++py)
-    {
-        for (int px = 0; px < monster.getSprite().height(); ++px)
-        {
-            if (monster.getSprite().body()[py * monster.getSprite().width() + px] != L' ')
-            {
-                Screen.getBuffer()[(monster.PosY + py) * Screen.width() + (monster.PosX + px)] = monster.getSprite().body()[py * monster.getSprite().width() + px];
             }
         }
     }
